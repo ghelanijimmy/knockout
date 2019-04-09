@@ -1,43 +1,54 @@
-function WebmailViewModel() {
-  // DATA
-  let self = this;
-  self.folders = ["Inbox", "Archive", "Sent", "Spam"];
-  self.chosenFolderId = ko.observable();
-  self.chosenFolderData = ko.observable();
-  self.chosenMailData = ko.observable();
+ko.bindingHandlers.fadeVisible = {
+  init: function(element, valueAccessor) {
+    // Start visible/invisible according to initial value
+    var shouldDisplay = valueAccessor();
+    $(element).toggle(shouldDisplay);
+  },
+  update: function(element, valueAccessor) {
+    // On update, fade in/out
+    var shouldDisplay = valueAccessor();
+    shouldDisplay ? $(element).fadeIn() : $(element).fadeOut();
+  },
+};
 
-  // Behaviours
-  self.goToFolder = folder => {
-    /*self.chosenFolderId(folder);
-    $.get("/mail", { folder: folder }, self.chosenFolderData);*/
-    location.hash = folder;
-  };
+ko.bindingHandlers.jqButton = {
+  init: function(element) {
+    $(element).button();
+  },
+  update: function(element, valueAccessor) {
+    var currentValue = valueAccessor();
+    $(element).button("option", "disabled", currentValue.enable === false);
+  },
+};
 
-  self.goToMail = mail => {
-    /*self.chosenFolderId(mail.folder);
-    self.chosenFolderData(null);
-    $.get("/mail", {mailId: mail.id}, self.chosenMailData);*/
-    location.hash = mail.folder + "/" + mail.id;
-  };
-
-  // Client side routes
-  Sammy(function() {
-    this.get("#:folder", function() {
-      self.chosenFolderId(this.params.folder);
-      self.chosenMailData(null);
-      $.get("/mail", { folder: this.params.folder }, self.chosenFolderData);
-    });
-
-    this.get("#:folder/:mailId", function() {
-      self.chosenFolderId(this.params.folder);
-      self.chosenFolderData(null);
-      $.get("/mail", { mailId: this.params.mailId }, self.chosenMailData);
-    });
-
-    this.get("", function() {
-      this.app.runRoute("get", "#Inbox");
-    });
-  }).run();
+function Answer(text) {
+  this.answerText = text;
+  this.points = ko.observable(1);
 }
 
-ko.applyBindings(new WebmailViewModel());
+function SurveyViewModel(question, pointsBudget, answers) {
+  this.question = question;
+  this.pointsBudget = pointsBudget;
+  this.answers = $.map(answers, function(text) {
+    return new Answer(text);
+  });
+  this.save = function() {
+    alert("To do");
+  };
+
+  this.pointsUsed = ko.computed(function() {
+    var total = 0;
+    for (var i = 0; i < this.answers.length; i++)
+      total += this.answers[i].points();
+    return total;
+  }, this);
+}
+
+ko.applyBindings(
+  new SurveyViewModel("Which factors affect your technology choices?", 10, [
+    "Functionality, compatibility, pricing - all that boring stuff",
+    "How often it is mentioned on Hacker News",
+    "Number of gradients/dropshadows on project homepage",
+    "Totally believable testimonials on project homepage",
+  ])
+);
